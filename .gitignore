@@ -1,0 +1,40 @@
+# ── Zmienne środowiskowe ─────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+# .env.example — celowo NIE ignorowany (szablon dla nowych developerów)
+
+# ── Node.js ──────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.Python
+*.egg-info/
+dist/
+build/
+
+# ── Docker ───────────────────────────────────────────────────────────
+# Wolumeny i dane PostgreSQL (jeśli montowane lokalnie)
+postgres_data/
+
+# ── Logi ─────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Systemy operacyjne ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo

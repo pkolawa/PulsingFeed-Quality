@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= article.title %> — PulsingFeed Quality</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .flag-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+    .flag { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:600; }
+    .flag-true  { background:#dcffe4; color:#22863a; }
+    .flag-false { background:#ffeef0; color:#d73a49; }
+    details summary { cursor:pointer; font-size:13px; color:var(--c-primary); }
+    pre { background:#f6f8fa; border:1px solid var(--c-border); border-radius:6px;
+          padding:14px; font-size:12px; overflow:auto; max-height:300px; }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a href="/" class="topbar-brand">⚡ PulsingFeed Quality</a>
+  <span class="topbar-sep">›</span>
+  <a href="/">Wydawcy</a>
+  <span class="topbar-sep">›</span>
+  <a href="/publisher/<%= article.publisher_id %>"><%= article.publisher_name %></a>
+  <span class="topbar-sep">›</span>
+  <span>Artykuł</span>
+</nav>
+
+<div class="container">
+
+  <%
+    const g = scoreGrade(article.total_score);
+    const cats = [
+      { key:'factuality',  label:'Faktyczność',              pct:'30%', score: article.factuality_score,  desc: article.factuality_description,  flags: article.llm_data?.factuality?.flags  },
+      { key:'linguistic',  label:'Poprawność językowa',       pct:'20%', score: article.linguistic_score,  desc: article.linguistic_description  },
+      { key:'logic',       label:'Logika i spójność',         pct:'20%', score: article.logic_score,       desc: article.logic_description,       flags: article.llm_data?.logic?.flags       },
+      { key:'journalism',  label:'Standardy dziennikarskie',  pct:'20%', score: article.journalism_score,  desc: article.journalism_description,  flags: article.llm_data?.journalism?.flags  },
+      { key:'sources',     label:'Rzetelność źródeł',         pct:'10%', score: article.sources_score,     desc: article.sources_description     },
+    ];
+  %>
+
+  <!-- ── Nagłówek artykułu ─────────────────────────────────────────── -->
+  <div class="card">
+    <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">
+      <div class="score-circle grade-<%= g %>">
+        <span class="score-val"><%= article.total_score !== null ? article.total_score : '—' %></span>
+        <span class="score-lbl">/ 100</span>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <h1 style="margin:0 0 6px; font-size:20px;"><%= article.title %></h1>
+        <div class="muted">
+          <%= article.publisher_name %> &nbsp;·&nbsp; <%= fmtDate(article.published_at || article.collected_at) %>
+          <% if (article.url) { %>
+            &nbsp;·&nbsp; <a href="<%= article.url %>" target="_blank">Otwórz artykuł ↗</a>
+          <% } %>
+        </div>
+        <% if (article.overall_description) { %>
+        <div class="desc-box" style="margin-top:12px;">
+          <strong>Ocena ogólna:</strong> <%= article.overall_description %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Wyniki kategorii ─────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Oceny kategorii</div>
+
+    <% cats.forEach(cat => { %>
+    <div class="detail-section">
+      <div class="cat-row">
+        <span class="cat-label" style="width:240px;">
+          <strong><%= cat.label %></strong>
+          <span class="muted"> (<%= cat.pct %>)</span>
+        </span>
+        <div class="bar-wrap" style="max-width:300px;">
+          <div class="bar-fill grade-<%= scoreGrade(cat.score) %>"
+               style="width:<%= cat.score !== null ? cat.score : 0 %>%"></div>
+        </div>
+        <span class="cat-value" style="font-size:16px; width:50px;">
+          <%= cat.score !== null ? cat.score : '—' %>
+        </span>
+      </div>
+
+      <% if (cat.desc) { %>
+      <div class="desc-box"><%= cat.desc %></div>
+      <% } %>
+
+      <% if (cat.flags && Object.keys(cat.flags).length > 0) { %>
+      <div class="flag-row">
+        <% Object.entries(cat.flags).forEach(([k, v]) => { %>
+        <span class="flag flag-<%= v ? 'true' : 'false' %>">
+          <%= k.replace(/_/g,' ') %>: <%= v ? '✓ tak' : '✗ nie' %>
+        </span>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- ── Szczegóły deterministyczne ──────────────────────────────── -->
+  <% if (article.deterministic_data) { %>
+  <div class="card">
+    <details>
+      <summary>Szczegóły analizy deterministycznej</summary>
+      <br>
+      <%
+        const det = article.deterministic_data;
+        const detRows = [
+          ['Słów w artykule',             det.structure?.word_count],
+          ['Akapitów',                    det.structure?.paragraph_count],
+          ['Śr. długość zdania (słów)',   det.linguistic?.avg_sentence_length],
+          ['Błędy językowe / 1 000 słów', det.linguistic?.errors_per_1000_words],
+          ['Błędy ortograficzne',         det.linguistic?.spelling_errors],
+          ['Błędy gramatyczne',           det.linguistic?.grammar_errors],
+          ['Linki zewnętrzne',            det.sources?.url_count],
+          ['Cytaty bezpośrednie',         det.sources?.quote_count],
+          ['Atrybucje',                   det.sources?.attribution_count],
+          ['Słowa sensacyjne',            det.sensationalism?.sensational_word_count],
+          ['Wykrzykniki',                 det.sensationalism?.exclamation_count],
+          ['Wzorce clickbait',            det.sensationalism?.clickbait_patterns],
+        ];
+      %>
+      <table class="data-table">
+        <tbody>
+          <% detRows.forEach(([label, val]) => { %>
+          <tr>
+            <td style="width:280px; color:var(--c-muted)"><%= label %></td>
+            <td><strong><%= val !== null && val !== undefined ? val : '—' %></strong></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <% if (det.sensationalism?.sensational_words?.length > 0) { %>
+      <p style="margin:12px 0 4px; font-size:13px; color:var(--c-muted)">Wykryte słowa sensacyjne:</p>
+      <div class="flag-row">
+        <% det.sensationalism.sensational_words.forEach(w => { %>
+        <span class="flag flag-false"><%= w %></span>
+        <% }) %>
+      </div>
+      <% } %>
+    </details>
+  </div>
+  <% } %>
+
+  <!-- ── Metadane analizy ─────────────────────────────────────────── -->
+  <div class="card">
+    <details>
+      <summary>Metadane analizy</summary>
+      <br>
+      <table class="data-table">
+        <tbody>
+          <tr><td style="width:200px;color:var(--c-muted)">Model LLM</td><td><%= article.llm_model || '—' %></td></tr>
+          <tr><td style="color:var(--c-muted)">Wersja algorytmu</td><td><%= article.analysis_version || '—' %></td></tr>
+          <tr><td style="color:var(--c-muted)">Data analizy</td><td><%= fmtDate(article.analyzed_at) %></td></tr>
+          <tr><td style="color:var(--c-muted)">Status</td>
+            <td><span class="status-badge badge-<%= article.analysis_status %>"><%= article.analysis_status %></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+</div>
+</body>
+</html>

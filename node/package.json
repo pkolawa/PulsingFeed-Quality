@@ -1,0 +1,16 @@
+{
+  "name": "pulsingfeed-quality-node",
+  "version": "1.0.0",
+  "description": "PulsingFeed Quality — Node.js services (api, collector, web)",
+  "private": true,
+  "workspaces": [
+    "api",
+    "collector",
+    "web"
+  ],
+  "scripts": {
+    "start": "npm run start --workspaces --if-present",
+    "dev": "npm run dev --workspaces --if-present",
+    "install:all": "npm install --workspaces"
+  }
+}

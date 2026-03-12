@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pulsingfeed
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+
+  python-worker:
+    build: ./python
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pulsingfeed
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-claude-3-5-haiku-20241022}
+      WORKER_POLL_INTERVAL: ${WORKER_POLL_INTERVAL:-10}
+      WORKER_BATCH_SIZE: ${WORKER_BATCH_SIZE:-5}
+    depends_on:
+      - postgres
+
+  collector:
+    build: ./node/collector
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pulsingfeed
+    depends_on:
+      - postgres
+
+  api:
+    build: ./node/api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pulsingfeed
+      PORT: 3001
+    depends_on:
+      - postgres
+
+  web:
+    build: ./node/web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      API_URL: http://api:3001
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

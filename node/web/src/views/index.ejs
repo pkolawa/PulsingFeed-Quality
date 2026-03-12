@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PulsingFeed Quality — Wydawcy</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <a href="/" class="topbar-brand">⚡ PulsingFeed Quality</a>
+  <span class="topbar-sep">›</span>
+  <a href="/">Wydawcy</a>
+</nav>
+
+<div class="container">
+  <h1 class="page-title">Rankingi wydawców</h1>
+
+  <% if (!publishers || publishers.length === 0) { %>
+    <div class="empty-state">
+      <p>Brak wydawców. Dodaj pierwszy kanał RSS przez API:</p>
+      <code>POST /api/publishers { "name": "...", "rss_url": "..." }</code>
+    </div>
+  <% } else { %>
+  <div class="card" style="padding:0; overflow:hidden;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Wydawca</th>
+          <th style="text-align:center">Wynik ogólny</th>
+          <th>Faktyczność</th>
+          <th>Językowa</th>
+          <th>Logika</th>
+          <th>Dziennikarstwo</th>
+          <th style="text-align:right">Artykuły</th>
+          <th style="text-align:right">Ostatni artykuł</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% publishers.forEach(p => {
+          const g = scoreGrade(p.avg_total_score);
+        %>
+        <tr>
+          <td>
+            <a href="/publisher/<%= p.publisher_id %>" style="font-weight:600">
+              <%= p.name %>
+            </a>
+            <% if (p.website_url) { %>
+              <br><span class="muted"><%= p.website_url %></span>
+            <% } %>
+          </td>
+          <td style="text-align:center">
+            <% if (p.avg_total_score !== null) { %>
+              <span class="score-badge grade-<%= g %>">
+                <%= p.avg_total_score %> / 100
+              </span>
+            <% } else { %>
+              <span class="score-badge grade-na">Brak danych</span>
+            <% } %>
+          </td>
+          <td>
+            <% if (p.avg_factuality !== null) { %>
+            <div class="cat-row" style="margin:0">
+              <div class="bar-wrap"><div class="bar-fill grade-<%= scoreGrade(p.avg_factuality) %>" style="width:<%= p.avg_factuality %>%"></div></div>
+              <span class="cat-value"><%= p.avg_factuality %></span>
+            </div>
+            <% } else { %>—<% } %>
+          </td>
+          <td>
+            <% if (p.avg_linguistic !== null) { %>
+            <div class="cat-row" style="margin:0">
+              <div class="bar-wrap"><div class="bar-fill grade-<%= scoreGrade(p.avg_linguistic) %>" style="width:<%= p.avg_linguistic %>%"></div></div>
+              <span class="cat-value"><%= p.avg_linguistic %></span>
+            </div>
+            <% } else { %>—<% } %>
+          </td>
+          <td>
+            <% if (p.avg_logic !== null) { %>
+            <div class="cat-row" style="margin:0">
+              <div class="bar-wrap"><div class="bar-fill grade-<%= scoreGrade(p.avg_logic) %>" style="width:<%= p.avg_logic %>%"></div></div>
+              <span class="cat-value"><%= p.avg_logic %></span>
+            </div>
+            <% } else { %>—<% } %>
+          </td>
+          <td>
+            <% if (p.avg_journalism !== null) { %>
+            <div class="cat-row" style="margin:0">
+              <div class="bar-wrap"><div class="bar-fill grade-<%= scoreGrade(p.avg_journalism) %>" style="width:<%= p.avg_journalism %>%"></div></div>
+              <span class="cat-value"><%= p.avg_journalism %></span>
+            </div>
+            <% } else { %>—<% } %>
+          </td>
+          <td style="text-align:right">
+            <strong><%= p.analyzed_articles %></strong>
+            <span class="muted"> / <%= p.total_articles %></span>
+          </td>
+          <td style="text-align:right; white-space:nowrap" class="muted">
+            <%= fmtDate(p.last_article_at) %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
+
+</body>
+</html>
