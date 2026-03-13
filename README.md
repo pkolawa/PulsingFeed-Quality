@@ -196,18 +196,19 @@ docker compose up -d python-worker
 ## API — dostępne endpointy
 
 ```
-GET    /api/publishers          # Lista wydawców posortowana wg jakości
-GET    /api/publishers/:id      # Szczegóły wydawcy + trend 6-miesięczny
-POST   /api/publishers          # Dodanie nowego źródła RSS
-DELETE /api/publishers/:id      # Usunięcie wydawcy
+GET    /api/publishers              # Lista wydawców posortowana wg jakości
+GET    /api/publishers/:id          # Szczegóły wydawcy + trend 6-miesięczny
+POST   /api/publishers              # Dodanie nowego źródła RSS
+DELETE /api/publishers/:id          # Usunięcie wydawcy
+POST   /api/publishers/:id/analyze  # Wymuszenie analizy artykułów wydawcy
 
-GET    /api/articles            # Lista artykułów (z filtrowaniem)
-GET    /api/articles/:id        # Szczegóły artykułu + pełne oceny
+GET    /api/articles                # Lista artykułów (z filtrowaniem)
+GET    /api/articles/:id            # Szczegóły artykułu + pełne oceny
 
-GET    /api/health              # Healthcheck
+GET    /api/health                  # Healthcheck
 ```
 
-Przykład dodania wydawcy:
+### Dodanie wydawcy
 
 ```bash
 curl -X POST http://localhost:3001/api/publishers \
@@ -218,6 +219,40 @@ curl -X POST http://localhost:3001/api/publishers \
     "website_url": "https://tvn24.pl"
   }'
 ```
+
+### Wymuszenie analizy artykułów wydawcy
+
+Endpoint ustawia artykuły wybranego wydawcy z powrotem na status `pending`, dzięki czemu Python worker podejmie ich analizę w kolejnym cyklu (domyślnie co 10 sekund).
+
+```bash
+# Ponów analizę artykułów które zakończyły się błędem (status: failed)
+curl -X POST http://localhost:3001/api/publishers/1/analyze
+
+# Wymuś pełną re-analizę wszystkich artykułów wydawcy (także już przeanalizowanych)
+curl -X POST "http://localhost:3001/api/publishers/1/analyze?force=true"
+```
+
+**Parametry:**
+
+| Parametr     | Typ     | Domyślnie | Opis                                                              |
+|--------------|---------|-----------|-------------------------------------------------------------------|
+| `id`         | integer | —         | ID wydawcy (z `GET /api/publishers`)                              |
+| `force=true` | boolean | `false`   | Jeśli `true` — resetuje również artykuły ze statusem `done`      |
+
+**Odpowiedź:**
+
+```json
+{
+  "publisher_id": 1,
+  "publisher_name": "TVN24",
+  "queued": 47,
+  "force": false
+}
+```
+
+**Przypadki użycia:**
+- `force=false` (domyślnie) — ponów analizę dla artykułów które się nie powiodły (`failed`)
+- `force=true` — pełna re-analiza po zmianie wag scoring'u lub aktualizacji promptów LLM
 
 ---
 

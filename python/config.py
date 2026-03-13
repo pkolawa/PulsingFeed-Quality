@@ -13,8 +13,17 @@ DATABASE_URL: str = os.getenv(
 )
 
 # --- LLM ---
+# Dostępne wartości: "anthropic" | "openai"
+LLM_PROVIDER: str      = os.getenv("LLM_PROVIDER", "anthropic").lower()
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-LLM_MODEL: str = os.getenv("LLM_MODEL", "claude-3-5-haiku-20241022")
+OPENAI_API_KEY: str    = os.getenv("OPENAI_API_KEY", "")
+
+# Domyślny model zależy od wybranego dostawcy
+_DEFAULT_MODELS = {
+    "anthropic": "claude-3-5-haiku-20241022",
+    "openai":    "gpt-4o-mini",
+}
+LLM_MODEL: str = os.getenv("LLM_MODEL", _DEFAULT_MODELS.get(LLM_PROVIDER, "claude-3-5-haiku-20241022"))
 
 # --- Worker ---
 WORKER_POLL_INTERVAL: int = int(os.getenv("WORKER_POLL_INTERVAL", "10"))

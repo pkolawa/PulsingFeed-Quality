@@ -5,15 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= article.title %> — PulsingFeed Quality</title>
   <link rel="stylesheet" href="/css/style.css">
-  <style>
-    .flag-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
-    .flag { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:600; }
-    .flag-true  { background:#dcffe4; color:#22863a; }
-    .flag-false { background:#ffeef0; color:#d73a49; }
-    details summary { cursor:pointer; font-size:13px; color:var(--c-primary); }
-    pre { background:#f6f8fa; border:1px solid var(--c-border); border-radius:6px;
-          padding:14px; font-size:12px; overflow:auto; max-height:300px; }
-  </style>
 </head>
 <body>
 
@@ -48,7 +39,7 @@
         <span class="score-lbl">/ 100</span>
       </div>
       <div style="flex:1; min-width:200px;">
-        <h1 style="margin:0 0 6px; font-size:20px;"><%= article.title %></h1>
+        <h1 style="margin:0 0 6px; font-size:22px; font-family:var(--font-display);"><%= article.title %></h1>
         <div class="muted">
           <%= article.publisher_name %> &nbsp;·&nbsp; <%= fmtDate(article.published_at || article.collected_at) %>
           <% if (article.url) { %>
@@ -128,7 +119,7 @@
         <tbody>
           <% detRows.forEach(([label, val]) => { %>
           <tr>
-            <td style="width:280px; color:var(--c-muted)"><%= label %></td>
+            <td style="width:280px; color:var(--text-muted)"><%= label %></td>
             <td><strong><%= val !== null && val !== undefined ? val : '—' %></strong></td>
           </tr>
           <% }) %>
@@ -136,7 +127,7 @@
       </table>
 
       <% if (det.sensationalism?.sensational_words?.length > 0) { %>
-      <p style="margin:12px 0 4px; font-size:13px; color:var(--c-muted)">Wykryte słowa sensacyjne:</p>
+      <p style="margin:12px 0 4px; font-size:13px; color:var(--text-muted)">Wykryte słowa sensacyjne:</p>
       <div class="flag-row">
         <% det.sensationalism.sensational_words.forEach(w => { %>
         <span class="flag flag-false"><%= w %></span>
@@ -154,10 +145,10 @@
       <br>
       <table class="data-table">
         <tbody>
-          <tr><td style="width:200px;color:var(--c-muted)">Model LLM</td><td><%= article.llm_model || '—' %></td></tr>
-          <tr><td style="color:var(--c-muted)">Wersja algorytmu</td><td><%= article.analysis_version || '—' %></td></tr>
-          <tr><td style="color:var(--c-muted)">Data analizy</td><td><%= fmtDate(article.analyzed_at) %></td></tr>
-          <tr><td style="color:var(--c-muted)">Status</td>
+          <tr><td style="width:200px;color:var(--text-muted)">Model LLM</td><td><%= article.llm_model || '—' %></td></tr>
+          <tr><td style="color:var(--text-muted)">Wersja algorytmu</td><td><%= article.analysis_version || '—' %></td></tr>
+          <tr><td style="color:var(--text-muted)">Data analizy</td><td><%= fmtDate(article.analyzed_at) %></td></tr>
+          <tr><td style="color:var(--text-muted)">Status</td>
             <td><span class="status-badge badge-<%= article.analysis_status %>"><%= article.analysis_status %></span></td>
           </tr>
         </tbody>
