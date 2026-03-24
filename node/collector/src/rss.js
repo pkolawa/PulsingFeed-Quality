@@ -1,7 +1,8 @@
 "use strict";
 
-const Parser = require("rss-parser");
-const { JSDOM } = require("jsdom");
+const Parser          = require("rss-parser");
+const { JSDOM }       = require("jsdom");
+const { scrapeFullText } = require("./scraper");
 
 const parser = new Parser({
   timeout: 15_000,
@@ -17,7 +18,6 @@ const parser = new Parser({
 
 /**
  * Usuwa tagi HTML z tekstu i normalizuje białe znaki.
- * Używa JSDOM dla dokładnego parsowania; fallback to regex.
  */
 function stripHtml(html) {
   if (!html) return "";
@@ -32,9 +32,9 @@ function stripHtml(html) {
 }
 
 /**
- * Wybiera najlepszą treść spośród dostępnych pól RSS.
+ * Wybiera najlepszą treść spośród dostępnych pól RSS (fallback gdy scraping zawiedzie).
  */
-function extractContent(item) {
+function extractRssFallback(item) {
   const raw =
     item.contentEncoded ||
     item.content ||
@@ -49,11 +49,6 @@ function extractContent(item) {
 // Pobieranie jednego kanału
 // ---------------------------------------------------------------------------
 
-/**
- * @param {object} publisher  – wiersz z tabeli publishers {id, name, rss_url}
- * @param {object} db         – pula połączeń pg
- * @returns {Promise<number>} – liczba dodanych artykułów
- */
 async function fetchFeed(publisher, db) {
   let feed;
   try {
@@ -66,13 +61,21 @@ async function fetchFeed(publisher, db) {
   let newCount = 0;
 
   for (const item of feed.items) {
-    const title      = (item.title || "").trim();
-    const content    = extractContent(item);
-    const url        = item.link || item.guid || null;
+    const title       = (item.title || "").trim();
+    const url         = item.link || item.guid || null;
     const publishedAt = item.pubDate ? new Date(item.pubDate) : null;
 
-    // Pomijamy artykuły bez treści lub zbyt krótkie
-    if (!title || content.length < 120) continue;
+    if (!title || !url) continue;
+
+    // Próbuj pobrać pełną treść ze strony; fallback to treść z RSS
+    const scraped     = await scrapeFullText(url);
+    const rssFallback = extractRssFallback(item);
+    const content     = scraped || rssFallback;
+
+    if (content.length < 120) continue;
+
+    const source = scraped ? "scrape" : "rss";
+    console.log(`[Collector] «${publisher.name}» [${source}] ${title.slice(0, 60)}`);
 
     try {
       const result = await db.query(
@@ -100,9 +103,6 @@ async function fetchFeed(publisher, db) {
 // Pobieranie wszystkich kanałów
 // ---------------------------------------------------------------------------
 
-/**
- * Pobiera artykuły ze wszystkich aktywnych wydawców (równolegle).
- */
 async function fetchAllFeeds(db) {
   const { rows: publishers } = await db.query(
     "SELECT id, name, rss_url FROM publishers ORDER BY id"
@@ -115,14 +115,12 @@ async function fetchAllFeeds(db) {
 
   console.log(`[Collector] Pobieram ${publishers.length} kanał(ów) RSS...`);
 
-  const results = await Promise.allSettled(
-    publishers.map((p) => fetchFeed(p, db))
-  );
+  // Sekwencyjnie per wydawca (równoległość wewnątrz fetchFeed już scrape'uje każdy artykuł)
+  let total = 0;
+  for (const publisher of publishers) {
+    total += await fetchFeed(publisher, db);
+  }
 
-  const total = results.reduce(
-    (sum, r) => sum + (r.status === "fulfilled" ? r.value : 0),
-    0
-  );
   console.log(`[Collector] Gotowe — łącznie +${total} nowych artykułów.`);
 }
 
