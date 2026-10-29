@@ -60,6 +60,14 @@ class Worker:
                         break
                     try:
                         result = self.pipeline.analyze(article)
+
+                        # Fallback LLM (sztuczne 50/100) nie może trafić do bazy
+                        # jako 'done' — oznaczamy jako 'failed' do ponowienia
+                        if not result["llm_data"].get("success", False):
+                            error = result["llm_data"].get("error", "Analiza LLM nieudana")
+                            self.repo.mark_failed(article["id"], f"LLM: {error}")
+                            continue
+
                         self.repo.save_score(result)
                     except Exception as exc:
                         logger.error(
