@@ -134,7 +134,9 @@ module.exports = function publishersRouter(db) {
 
       const { rows } = await db.query(
         `UPDATE articles
-         SET analysis_status = 'pending'
+         SET analysis_status = 'pending',
+             retry_count     = 0,
+             error_message   = NULL
          WHERE publisher_id = $1
            AND analysis_status = ANY($2::text[])
          RETURNING id`,

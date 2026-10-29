@@ -44,19 +44,26 @@ class Worker:
             f"batch={WORKER_BATCH_SIZE} | "
             f"poll={WORKER_POLL_INTERVAL}s"
         )
+        # Artykuły porzucone przez poprzednią instancję (np. po awarii)
+        self.repo.release_stale_processing()
+
         while self.running:
             try:
                 articles = self.repo.get_pending_articles(WORKER_BATCH_SIZE)
 
                 if not articles:
                     logger.debug("Brak nowych artykułów — czekam...")
+                    # Bezczynność to dobry moment na sprzątanie po innych workerach
+                    self.repo.release_stale_processing()
                     time.sleep(WORKER_POLL_INTERVAL)
                     continue
 
                 logger.info(f"Pobrano {len(articles)} artykuł(ów) do analizy.")
 
-                for article in articles:
+                for idx, article in enumerate(articles):
                     if not self.running:
+                        # Nie zostawiamy pobranych artykułów w 'processing'
+                        self.repo.release_articles([a["id"] for a in articles[idx:]])
                         break
                     try:
                         result = self.pipeline.analyze(article)

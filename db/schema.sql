@@ -25,6 +25,10 @@ CREATE TABLE articles (
     published_at    TIMESTAMPTZ,
     collected_at    TIMESTAMPTZ  DEFAULT NOW(),
     analysis_status VARCHAR(20)  DEFAULT 'pending',
+    -- Obsługa błędów i ponowień (worker)
+    processing_started_at TIMESTAMPTZ,              -- początek ostatniej próby analizy
+    retry_count     INTEGER      NOT NULL DEFAULT 0, -- liczba nieudanych prób
+    error_message   TEXT,                           -- przyczyna ostatniego błędu
     CONSTRAINT chk_status CHECK (
         analysis_status IN ('pending', 'processing', 'done', 'failed')
     )

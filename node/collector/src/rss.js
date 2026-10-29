@@ -58,6 +58,20 @@ async function fetchFeed(publisher, db) {
     return 0;
   }
 
+  // Jedno zapytanie per kanał zamiast scrapowania artykułów, które już mamy
+  const feedUrls = feed.items.map((item) => item.link || item.guid).filter(Boolean);
+  let knownUrls;
+  try {
+    const { rows } = await db.query(
+      "SELECT url FROM articles WHERE url = ANY($1::text[])",
+      [feedUrls]
+    );
+    knownUrls = new Set(rows.map((row) => row.url));
+  } catch (err) {
+    console.error(`[Collector] Błąd DB przy sprawdzaniu «${publisher.name}»: ${err.message}`);
+    return 0;
+  }
+
   let newCount = 0;
 
   for (const item of feed.items) {
@@ -65,7 +79,8 @@ async function fetchFeed(publisher, db) {
     const url         = item.link || item.guid || null;
     const publishedAt = item.pubDate ? new Date(item.pubDate) : null;
 
-    if (!title || !url) continue;
+    if (!title || !url || knownUrls.has(url)) continue;
+    knownUrls.add(url);   // duplikaty w obrębie jednego feedu
 
     // Próbuj pobrać pełną treść ze strony; fallback to treść z RSS
     const scraped     = await scrapeFullText(url);

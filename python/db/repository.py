@@ -10,9 +10,17 @@ from typing import Any
 import psycopg2
 import psycopg2.extras
 
-from config import DATABASE_URL
+from config import (
+    DATABASE_URL,
+    WORKER_MAX_RETRIES,
+    WORKER_PROCESSING_TIMEOUT_MINUTES,
+    WORKER_RETRY_DELAY_MINUTES,
+)
 
 logger = logging.getLogger(__name__)
+
+# Limit długości zapisywanego komunikatu błędu
+_MAX_ERROR_LENGTH = 2000
 
 
 class Repository:
@@ -26,26 +34,34 @@ class Repository:
     # ------------------------------------------------------------------
     def get_pending_articles(self, limit: int = 5) -> list[dict[str, Any]]:
         """
-        Pobiera `limit` artykułów ze statusem 'pending', atomowo
-        zmieniając ich status na 'processing'.
+        Pobiera `limit` artykułów do analizy, atomowo zmieniając ich status
+        na 'processing'. Obejmuje artykuły 'pending' oraz 'failed', które nie
+        wyczerpały limitu ponowień i odczekały WORKER_RETRY_DELAY_MINUTES.
         SKIP LOCKED zapewnia, że równoległe workery nie pobiorą tych samych rekordów.
         """
         with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
                 """
                 UPDATE articles
-                SET    analysis_status = 'processing'
+                SET    analysis_status       = 'processing',
+                       processing_started_at = NOW()
                 WHERE  id IN (
                     SELECT id
                     FROM   articles
                     WHERE  analysis_status = 'pending'
+                       OR (
+                            analysis_status = 'failed'
+                        AND retry_count < %s
+                        AND COALESCE(processing_started_at, '-infinity')
+                            < NOW() - make_interval(mins => %s)
+                       )
                     ORDER  BY collected_at ASC
                     LIMIT  %s
                     FOR UPDATE SKIP LOCKED
                 )
-                RETURNING id, title, content, url, publisher_id
+                RETURNING id, title, content, url, publisher_id, retry_count
                 """,
-                (limit,),
+                (WORKER_MAX_RETRIES, WORKER_RETRY_DELAY_MINUTES, limit),
             )
             self.conn.commit()
             return [dict(row) for row in cur.fetchall()]
@@ -109,7 +125,11 @@ class Repository:
                 ),
             )
             cur.execute(
-                "UPDATE articles SET analysis_status = 'done' WHERE id = %s",
+                """
+                UPDATE articles
+                SET    analysis_status = 'done', error_message = NULL
+                WHERE  id = %s
+                """,
                 (score["article_id"],),
             )
             self.conn.commit()
@@ -117,14 +137,79 @@ class Repository:
 
     # ------------------------------------------------------------------
     def mark_failed(self, article_id: int, error: str) -> None:
-        """Oznacza artykuł jako 'failed' po niepowodzeniu analizy."""
+        """
+        Oznacza artykuł jako 'failed', zwiększa licznik prób i zapisuje
+        przyczynę. Dopóki retry_count < WORKER_MAX_RETRIES, artykuł wróci
+        do kolejki po WORKER_RETRY_DELAY_MINUTES.
+        """
         with self.conn.cursor() as cur:
             cur.execute(
-                "UPDATE articles SET analysis_status = 'failed' WHERE id = %s",
-                (article_id,),
+                """
+                UPDATE articles
+                SET    analysis_status = 'failed',
+                       retry_count     = retry_count + 1,
+                       error_message   = %s
+                WHERE  id = %s
+                RETURNING retry_count
+                """,
+                (error[:_MAX_ERROR_LENGTH], article_id),
+            )
+            row = cur.fetchone()
+            self.conn.commit()
+
+        retry_count = row[0] if row else 0
+        if retry_count < WORKER_MAX_RETRIES:
+            outcome = f"ponowienie za {WORKER_RETRY_DELAY_MINUTES} min"
+        else:
+            outcome = "limit ponowień wyczerpany"
+        logger.warning(
+            f"[DB] Artykuł #{article_id} oznaczony jako failed "
+            f"(próba {retry_count}/{WORKER_MAX_RETRIES}, {outcome}): {error}"
+        )
+
+    # ------------------------------------------------------------------
+    def release_stale_processing(self) -> int:
+        """
+        Odblokowuje artykuły porzucone w 'processing' (np. po awarii workera).
+        Porzucenie liczy się jako nieudana próba — artykuł, który za każdym
+        razem wywraca workera, nie zapętli się w nieskończoność.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE articles
+                SET    analysis_status = 'failed',
+                       retry_count     = retry_count + 1,
+                       error_message   = 'Przetwarzanie przerwane (przekroczony czas)'
+                WHERE  analysis_status = 'processing'
+                  AND  COALESCE(processing_started_at, '-infinity')
+                       < NOW() - make_interval(mins => %s)
+                """,
+                (WORKER_PROCESSING_TIMEOUT_MINUTES,),
+            )
+            released = cur.rowcount
+            self.conn.commit()
+
+        if released:
+            logger.warning(f"[DB] Odblokowano {released} porzuconych artykułów z 'processing'.")
+        return released
+
+    # ------------------------------------------------------------------
+    def release_articles(self, article_ids: list[int]) -> None:
+        """Zwraca do kolejki pobrane, ale nieprzeanalizowane artykuły (np. przy zatrzymaniu)."""
+        if not article_ids:
+            return
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE articles
+                SET    analysis_status = 'pending'
+                WHERE  id = ANY(%s) AND analysis_status = 'processing'
+                """,
+                (article_ids,),
             )
             self.conn.commit()
-        logger.warning(f"[DB] Artykuł #{article_id} oznaczony jako failed: {error}")
+        logger.info(f"[DB] Zwrócono {len(article_ids)} artykuł(ów) do kolejki.")
 
     # ------------------------------------------------------------------
     def close(self) -> None:

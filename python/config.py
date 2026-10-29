@@ -33,6 +33,12 @@ ANTHROPIC_EFFORT: str = os.getenv("ANTHROPIC_EFFORT") or "medium"
 # --- Worker ---
 WORKER_POLL_INTERVAL: int = int(os.getenv("WORKER_POLL_INTERVAL", "10"))
 WORKER_BATCH_SIZE: int    = int(os.getenv("WORKER_BATCH_SIZE", "5"))
+# Ile razy ponawiać analizę artykułu, zanim zostanie trwale 'failed'
+WORKER_MAX_RETRIES: int   = int(os.getenv("WORKER_MAX_RETRIES", "3"))
+# Odstęp między ponowieniami (chroni przed spalaniem prób, gdy API LLM leży)
+WORKER_RETRY_DELAY_MINUTES: int = int(os.getenv("WORKER_RETRY_DELAY_MINUTES", "30"))
+# Po tym czasie artykuł w 'processing' uznajemy za porzucony (np. awaria workera)
+WORKER_PROCESSING_TIMEOUT_MINUTES: int = int(os.getenv("WORKER_PROCESSING_TIMEOUT_MINUTES", "30"))
 
 # --- Wersja algorytmu (zmień przy każdej znaczącej zmianie logiki) ---
 ANALYSIS_VERSION: str = "1.0.0"
