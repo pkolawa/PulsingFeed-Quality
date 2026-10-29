@@ -12,17 +12,16 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # ── Wzorce interpunkcyjne ────────────────────────────────────────────
-_RE_MISSING_SPACE_AFTER = re.compile(r"[,;:](?!\s|$)")
+# Brak spacji po , ; : — z wyjątkiem liczb dziesiętnych i godzin (3,5 / 12:30)
+_RE_MISSING_SPACE_AFTER = re.compile(r"(?<!\d)[,;:](?=\S)|[,;:](?=[^\s\d])")
 _RE_SPACE_BEFORE_PUNCT  = re.compile(r"\s+[,;:.!?]")
 _RE_DOUBLE_SPACE        = re.compile(r" {2,}")
 _RE_REPEATED_PUNCT      = re.compile(r"[!?]{3,}")
-_RE_ELLIPSIS_WRONG      = re.compile(r"\.{2}(?!\.)")   # dwie kropki (nie wielokropek)
+_RE_ELLIPSIS_WRONG      = re.compile(r"(?<!\.)\.{2}(?!\.)")   # dokładnie dwie kropki (nie wielokropek)
 
 # ── Wzorce potencjalnych błędów ortograficznych ───────────────────────
 # Małe litery po kropce/wykrzykniku/pytajniku (poza skrótami)
-_RE_LOWERCASE_AFTER_SENT = re.compile(r"(?<=[.!?])\s+[a-z]")
-# Brak spacji po przecinku (ale nie w liczbach)
-_RE_COMMA_NO_SPACE      = re.compile(r",(?!\s|\d)")
+_RE_LOWERCASE_AFTER_SENT = re.compile(r"(?<=[.!?])\s+[a-ząćęłńóśźż]")
 
 
 class LinguisticAnalyzer:
@@ -49,7 +48,6 @@ class LinguisticAnalyzer:
             + len(_RE_DOUBLE_SPACE.findall(full_text))
             + len(_RE_REPEATED_PUNCT.findall(full_text))
             + len(_RE_ELLIPSIS_WRONG.findall(full_text))
-            + len(_RE_COMMA_NO_SPACE.findall(full_text))
         )
 
         # ── Sygnały ortograficzne (heurystyki) ───────────────────────
