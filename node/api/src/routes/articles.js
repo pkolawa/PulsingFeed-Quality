@@ -38,8 +38,11 @@ module.exports = function articlesRouter(db) {
 
     const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
-    params.push(Math.min(parseInt(limit, 10), 100));
-    params.push(Math.max(parseInt(offset, 10), 0));
+    // Nieprawidłowe wartości (NaN, ujemne) zastępujemy domyślnymi
+    const parsedLimit  = parseInt(limit, 10);
+    const parsedOffset = parseInt(offset, 10);
+    params.push(Number.isNaN(parsedLimit)  ? 30 : Math.min(Math.max(parsedLimit, 1), 100));
+    params.push(Number.isNaN(parsedOffset) ? 0  : Math.max(parsedOffset, 0));
 
     const limitPlaceholder  = `$${params.length - 1}`;
     const offsetPlaceholder = `$${params.length}`;
@@ -68,7 +71,7 @@ module.exports = function articlesRouter(db) {
       res.json(rows);
     } catch (err) {
       console.error("[API] GET /articles:", err.message);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   });
 
@@ -116,7 +119,7 @@ module.exports = function articlesRouter(db) {
       res.json(rows[0]);
     } catch (err) {
       console.error("[API] GET /articles/:id:", err.message);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   });
 
