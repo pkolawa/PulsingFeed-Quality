@@ -42,7 +42,8 @@ class LLMEvaluator:
         )
 
         try:
-            raw_text, tokens_used = self.client.complete(prompt, max_tokens=1_500)
+            # Limit obejmuje także tokeny rozumowania modelu, nie tylko odpowiedź JSON
+            raw_text, tokens_used = self.client.complete(prompt, max_tokens=16_000)
             result = self._parse(raw_text)
             result["tokens_used"] = tokens_used
             result["model"]       = self.client.model

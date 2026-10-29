@@ -6,7 +6,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from config import LLM_PROVIDER, LLM_MODEL, ANTHROPIC_API_KEY, OPENAI_API_KEY
+from config import LLM_PROVIDER, LLM_MODEL, ANTHROPIC_API_KEY, ANTHROPIC_EFFORT, OPENAI_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +35,17 @@ class _AnthropicProvider(_BaseProvider):
             model=self.model,
             max_tokens=max_tokens,
             messages=[{"role": "user", "content": prompt}],
+            # extra_body — działa także na starszych wersjach SDK bez parametru output_config
+            extra_body={"output_config": {"effort": ANTHROPIC_EFFORT}},
         )
-        text = message.content[0].text
+        # Model może odmówić odpowiedzi (HTTP 200 + stop_reason "refusal")
+        if message.stop_reason == "refusal":
+            raise ValueError(f"Model odmówił odpowiedzi: {getattr(message, 'stop_details', None)}")
+        if message.stop_reason == "max_tokens":
+            raise ValueError(f"Odpowiedź ucięta po {max_tokens} tokenach (max_tokens).")
+
+        # Odpowiedź może zaczynać się od bloków "thinking" — bierzemy tylko bloki tekstowe
+        text = "".join(block.text for block in message.content if block.type == "text")
         tokens_used = message.usage.input_tokens + message.usage.output_tokens
         return text, tokens_used
 

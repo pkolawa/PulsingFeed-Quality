@@ -20,10 +20,15 @@ OPENAI_API_KEY: str    = os.getenv("OPENAI_API_KEY", "")
 
 # Domyślny model zależy od wybranego dostawcy
 _DEFAULT_MODELS = {
-    "anthropic": "claude-3-5-haiku-20241022",
+    "anthropic": "claude-sonnet-5-5",
     "openai":    "gpt-4o-mini",
 }
-LLM_MODEL: str = os.getenv("LLM_MODEL", _DEFAULT_MODELS.get(LLM_PROVIDER, "claude-3-5-haiku-20241022"))
+# `or` zamiast domyślnej wartości getenv — docker-compose przekazuje pusty
+# string, gdy zmienna nie jest ustawiona w .env
+LLM_MODEL: str = os.getenv("LLM_MODEL") or _DEFAULT_MODELS.get(LLM_PROVIDER, "claude-sonnet-5-5")
+
+# Głębokość rozumowania modelu Claude: low | medium | high | xhigh | max
+ANTHROPIC_EFFORT: str = os.getenv("ANTHROPIC_EFFORT") or "medium"
 
 # --- Worker ---
 WORKER_POLL_INTERVAL: int = int(os.getenv("WORKER_POLL_INTERVAL", "10"))

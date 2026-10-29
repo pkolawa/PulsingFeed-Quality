@@ -44,7 +44,7 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/pulsingfeed
 
 # Anthropic API (wymagane do analizy LLM)
 ANTHROPIC_API_KEY=sk-ant-...
-LLM_MODEL=claude-3-5-haiku-20241022
+LLM_MODEL=claude-sonnet-5-5
 
 # Worker
 WORKER_POLL_INTERVAL=10   # sekundy między kolejkami
@@ -308,7 +308,7 @@ Zmienne w `.env` kontrolujące zachowanie workera Python:
 |-----------------------|----------|-----------------------------------------|
 | `WORKER_POLL_INTERVAL` | `10`    | Sekundy między sprawdzeniem kolejki     |
 | `WORKER_BATCH_SIZE`    | `5`     | Liczba artykułów analizowanych naraz    |
-| `LLM_MODEL`            | `claude-3-5-haiku-20241022` | Model Claude do analizy |
+| `LLM_MODEL`            | `claude-sonnet-5-5` | Model Claude do analizy |
 | `ANALYSIS_VERSION`     | `1.0.0` | Wersja algorytmu (w `config.py`)        |
 
 ---
