@@ -6,11 +6,18 @@ Pokrywa trzy wymiary niedostępne dla analizy deterministycznej:
   - Faktyczność
   - Logika i spójność narracyjna
   - Standardy dziennikarskie
+
+Prompt jest podzielony na dwie części:
+  - ARTICLE_EVALUATION_SYSTEM — stała instrukcja (kryteria + format odpowiedzi),
+    identyczna dla każdego artykułu, dzięki czemu może być cache'owana (prompt caching).
+  - ARTICLE_EVALUATION_USER — szablon z tytułem i treścią konkretnego artykułu.
+Nie wstawiaj do części systemowej niczego zmiennego (dat, ID, danych artykułu) —
+każda zmiana bajtu unieważnia cache.
 """
 
-ARTICLE_EVALUATION_PROMPT = """\
-Jesteś ekspertem oceniającym jakość dziennikarstwa. Przeanalizuj poniższy artykuł \
-prasowy pod kątem trzech kryteriów i przyznaj oceny od 0 do 100.
+ARTICLE_EVALUATION_SYSTEM = """\
+Jesteś ekspertem oceniającym jakość dziennikarstwa. Przeanalizuj artykuł prasowy \
+przesłany w wiadomości użytkownika pod kątem trzech kryteriów i przyznaj oceny od 0 do 100.
 
 ════════════════════════════════════════════
 KRYTERIA OCENY
@@ -46,6 +53,47 @@ KRYTERIA OCENY
    lub prezentuje opinię jako obiektywny fakt.
 
 ════════════════════════════════════════════
+FORMAT ODPOWIEDZI
+════════════════════════════════════════════
+
+Odpowiedz WYŁĄCZNIE poprawnym JSON-em (bez żadnego tekstu przed ani po):
+
+{
+  "factuality": {
+    "score": <liczba całkowita 0-100>,
+    "description": "<uzasadnienie oceny: max 3 zdania po polsku>",
+    "flags": {
+      "contains_unverified_claims": <true|false>,
+      "mixes_facts_with_opinions":  <true|false>,
+      "data_is_precise":            <true|false>
+    }
+  },
+  "logic": {
+    "score": <liczba całkowita 0-100>,
+    "description": "<uzasadnienie oceny: max 3 zdania po polsku>",
+    "flags": {
+      "has_internal_contradictions":   <true|false>,
+      "narrative_is_clear":            <true|false>,
+      "conclusions_follow_from_facts": <true|false>
+    }
+  },
+  "journalism": {
+    "score": <liczba całkowita 0-100>,
+    "description": "<uzasadnienie oceny: max 3 zdania po polsku>",
+    "flags": {
+      "is_opinion_piece":           <true|false>,
+      "has_multiple_perspectives":  <true|false>,
+      "headline_matches_content":   <true|false>,
+      "maintains_neutral_tone":     <true|false>,
+      "clickbait_headline":         <true|false>
+    }
+  },
+  "overall_description": "<ogólna ocena jakości artykułu: max 4 zdania po polsku>"
+}
+"""
+
+ARTICLE_EVALUATION_USER = """\
+════════════════════════════════════════════
 ARTYKUŁ DO OCENY
 ════════════════════════════════════════════
 
@@ -53,43 +101,4 @@ Tytuł: {title}
 
 Treść:
 {content}
-
-════════════════════════════════════════════
-FORMAT ODPOWIEDZI
-════════════════════════════════════════════
-
-Odpowiedz WYŁĄCZNIE poprawnym JSON-em (bez żadnego tekstu przed ani po):
-
-{{
-  "factuality": {{
-    "score": <liczba całkowita 0-100>,
-    "description": "<uzasadnienie oceny: max 3 zdania po polsku>",
-    "flags": {{
-      "contains_unverified_claims": <true|false>,
-      "mixes_facts_with_opinions":  <true|false>,
-      "data_is_precise":            <true|false>
-    }}
-  }},
-  "logic": {{
-    "score": <liczba całkowita 0-100>,
-    "description": "<uzasadnienie oceny: max 3 zdania po polsku>",
-    "flags": {{
-      "has_internal_contradictions":   <true|false>,
-      "narrative_is_clear":            <true|false>,
-      "conclusions_follow_from_facts": <true|false>
-    }}
-  }},
-  "journalism": {{
-    "score": <liczba całkowita 0-100>,
-    "description": "<uzasadnienie oceny: max 3 zdania po polsku>",
-    "flags": {{
-      "is_opinion_piece":           <true|false>,
-      "has_multiple_perspectives":  <true|false>,
-      "headline_matches_content":   <true|false>,
-      "maintains_neutral_tone":     <true|false>,
-      "clickbait_headline":         <true|false>
-    }}
-  }},
-  "overall_description": "<ogólna ocena jakości artykułu: max 4 zdania po polsku>"
-}}
 """
