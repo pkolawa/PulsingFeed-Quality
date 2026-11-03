@@ -13,10 +13,10 @@
     const g = scoreGrade(article.total_score);
     const status = statusBadge(article.analysis_status);
     const cats = [
-      { key:'factuality',  label:'Faktyczność',              pct:'30%', score: article.factuality_score,  desc: article.factuality_description,  flags: article.llm_data?.factuality?.flags  },
+      { key:'factuality',  label:'Faktyczność',              pct:'30%', score: article.factuality_score,  desc: article.factuality_description,  flags: article.llm_data?.factuality_flags  },
       { key:'linguistic',  label:'Poprawność językowa',       pct:'20%', score: article.linguistic_score,  desc: article.linguistic_description  },
-      { key:'logic',       label:'Logika i spójność',         pct:'20%', score: article.logic_score,       desc: article.logic_description,       flags: article.llm_data?.logic?.flags       },
-      { key:'journalism',  label:'Standardy dziennikarskie',  pct:'20%', score: article.journalism_score,  desc: article.journalism_description,  flags: article.llm_data?.journalism?.flags  },
+      { key:'logic',       label:'Logika i spójność',         pct:'20%', score: article.logic_score,       desc: article.logic_description,       flags: article.llm_data?.logic_flags       },
+      { key:'journalism',  label:'Standardy dziennikarskie',  pct:'20%', score: article.journalism_score,  desc: article.journalism_description,  flags: article.llm_data?.journalism_flags  },
       { key:'sources',     label:'Rzetelność źródeł',         pct:'10%', score: article.sources_score,     desc: article.sources_description     },
     ];
   %>
@@ -59,10 +59,8 @@
 
         <% if (cat.flags && Object.keys(cat.flags).length > 0) { %>
         <div class="flag-row">
-          <% Object.entries(cat.flags).forEach(([k, v]) => { %>
-          <span class="pf-badge <%= v ? 'pf-badge--success' : 'pf-badge--error' %>">
-            <%= k.replace(/_/g,' ') %>: <%= v ? '✓ tak' : '✗ nie' %>
-          </span>
+          <% Object.entries(cat.flags).forEach(([k, v]) => { const flag = flagBadge(k, v); %>
+          <span class="pf-badge <%= flag.cls %>"><%= flag.text %></span>
           <% }) %>
         </div>
         <% } %>

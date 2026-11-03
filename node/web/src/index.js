@@ -5,6 +5,8 @@ const express = require("express");
 const axios   = require("axios");
 const path    = require("path");
 
+const { flagBadge } = require("./llm-flags");
+
 const app     = express();
 const PORT    = process.env.PORT    || 3000;
 const API_URL = process.env.API_URL || "http://localhost:3001";
@@ -69,7 +71,7 @@ app.get("/publisher/:id", async (req, res) => {
 app.get("/article/:id", async (req, res) => {
   try {
     const { data: article } = await axios.get(`${API_URL}/api/articles/${req.params.id}`);
-    res.render("article", { article, scoreGrade, fmtDate, statusBadge });
+    res.render("article", { article, scoreGrade, fmtDate, statusBadge, flagBadge });
   } catch (err) {
     res.render("error", { message: err.message });
   }
