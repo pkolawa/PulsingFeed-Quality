@@ -1,24 +1,8 @@
 {
   "text": [
-    ["text-primary", "bg"], ["text-primary", "surface"], ["text-primary", "surface-warm"],
-    ["text-secondary", "bg"], ["text-secondary", "surface"], ["text-secondary", "surface-warm"], ["text-secondary", "accent-subtle"],
-    ["text-muted", "bg"], ["text-muted", "surface"], ["text-muted", "surface-warm"],
-    ["accent", "bg"], ["accent", "surface"], ["accent", "surface-warm"], ["accent", "accent-subtle"], ["accent", "accent-muted"],
-    ["on-accent", "accent"], ["on-accent", "accent-hover"], ["on-accent", "accent-active"],
-    ["on-masthead", "masthead"], ["on-masthead", "masthead-deep"],
-    ["on-masthead-secondary", "masthead"], ["on-masthead-secondary", "masthead-deep"],
-    ["on-masthead-muted", "masthead"], ["on-masthead-muted", "masthead-deep"],
-    ["masthead-accent", "masthead"], ["masthead-accent", "masthead-deep"],
-    ["success", "success-bg"], ["success", "surface"], ["success", "bg"],
-    ["warning", "warning-bg"], ["warning", "surface"], ["warning", "bg"],
-    ["error", "error-bg"], ["error", "surface"], ["error", "bg"], ["on-error", "error"],
-    ["info", "info-bg"], ["info", "surface"], ["info", "bg"],
-    ["on-grade", "grade-a"], ["on-grade", "grade-b"], ["on-grade", "grade-c"], ["on-grade", "grade-d"], ["on-grade", "grade-na"]
+    ["text-primary","bg"], ["text-primary","surface"], ["text-primary","surface-warm"], ["text-secondary","bg"], ["text-secondary","surface"], ["text-secondary","surface-warm"], ["text-secondary","accent-subtle"], ["text-muted","bg"], ["text-muted","surface"], ["text-muted","surface-warm"], ["accent","bg"], ["accent","surface"], ["accent","surface-warm"], ["accent","accent-subtle"], ["accent","accent-muted"], ["on-accent","accent"], ["on-accent","accent-hover"], ["on-accent","accent-active"], ["on-masthead","masthead"], ["on-masthead","masthead-deep"], ["on-masthead-secondary","masthead"], ["on-masthead-secondary","masthead-deep"], ["on-masthead-muted","masthead"], ["on-masthead-muted","masthead-deep"], ["masthead-accent","masthead"], ["masthead-accent","masthead-deep"], ["success","success-bg"], ["success","surface"], ["success","bg"], ["warning","warning-bg"], ["warning","surface"], ["warning","bg"], ["error","error-bg"], ["error","surface"], ["error","bg"], ["on-error","error"], ["info","info-bg"], ["info","surface"], ["info","bg"], ["grade-a","grade-a-bg"], ["grade-a","surface"], ["grade-a","bg"], ["grade-b","grade-b-bg"], ["grade-b","surface"], ["grade-b","bg"], ["grade-c","grade-c-bg"], ["grade-c","surface"], ["grade-c","bg"], ["grade-d","grade-d-bg"], ["grade-d","surface"], ["grade-d","bg"], ["grade-na","grade-na-bg"], ["grade-na","surface"], ["grade-na","bg"], ["on-accent","green-700"], ["olive-700","olive-100"], ["amber-700","amber-100"], ["red-700","red-100"], ["blue-700","blue-100"], ["text-muted","neutral-100"]
   ],
   "nonText": [
-    ["focus-ring", "bg"], ["focus-ring", "surface"], ["focus-ring", "surface-warm"],
-    ["masthead-accent", "masthead"],
-    ["border-strong", "bg"], ["border-strong", "surface"], ["border-strong", "surface-warm"],
-    ["accent", "surface"], ["accent", "bg"]
+    ["focus-ring","bg"], ["focus-ring","surface"], ["focus-ring","surface-warm"], ["masthead-accent","masthead"], ["border-strong","bg"], ["border-strong","surface"], ["border-strong","surface-warm"], ["accent","surface"], ["accent","bg"], ["grade-a","grade-a-bg"], ["grade-b","grade-b-bg"], ["grade-c","grade-c-bg"], ["grade-d","grade-d-bg"], ["chart-bar","surface"], ["chart-bar","surface-warm"], ["chart-bar-hover","surface"], ["accent","grade-a-bg"]
   ]
 }

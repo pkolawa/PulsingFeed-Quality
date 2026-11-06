@@ -19,11 +19,9 @@
   /* === Kontrolki: nadpisywane w .pf-on-masthead === */
   --control-bg: var(--surface-warm);
   --control-fg: var(--text-secondary);
-  --control-line: var(--border);
   --control-shadow: var(--shadow-xs);
   --control-bg-hover: var(--accent-subtle);
   --control-fg-hover: var(--accent);
-  --control-line-hover: var(--accent-hover);
   --quiet-fg: var(--text-muted);
   --focus-color: var(--focus-ring);
 }
@@ -45,11 +43,9 @@
 .pf-on-masthead {
   --control-bg: var(--masthead-fill);
   --control-fg: var(--on-masthead-secondary);
-  --control-line: var(--masthead-line);
   --control-shadow: none;
   --control-bg-hover: var(--masthead-fill-hover);
   --control-fg-hover: var(--on-masthead);
-  --control-line-hover: var(--masthead-line-strong);
   --quiet-fg: var(--on-masthead-secondary);
   --focus-color: var(--masthead-accent);
 }
