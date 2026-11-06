@@ -362,7 +362,14 @@ a.pf-badge:hover {
   font-size: var(--fs-ui-xs);
   font-weight: 600;
   color: var(--masthead-accent);
-  background: var(--masthead-fill);
+  /* Bez tła: masthead-fill rozjaśniał masthead i masthead-accent miał tylko 3,81:1 */
+  background: transparent;
+}
+
+/* Na mastheadzie hover nie może przejść na ciemny accent */
+.pf-on-masthead a.pf-badge:hover,
+a.pf-badge--masthead:hover {
+  color: var(--on-masthead);
 }
 
 .pf-badge__dot {
@@ -374,7 +381,8 @@ a.pf-badge:hover {
 }
 
 .pf-badge__dot--pulse {
-  animation: pf-pulse 2s ease-in-out infinite;
+  /* Dwa cykle: ruch kończy się przed 5 s (WCAG 2.2.2) */
+  animation: pf-pulse 2s ease-in-out 2;
 }
 
 @keyframes pf-pulse {
@@ -1143,7 +1151,7 @@ a.pf-badge:hover {
   display: inline-flex;
   flex-shrink: 0;
   overflow: hidden;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--border-strong);
   border-radius: var(--radius-md);
 }
 
