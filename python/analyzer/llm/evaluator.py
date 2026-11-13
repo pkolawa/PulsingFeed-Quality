@@ -3,6 +3,7 @@ Moduł oceny LLM — wysyła artykuł do modelu i parsuje strukturalną odpowied
 Obsługuje błędy parsowania i zwraca bezpieczny wynik zastępczy w razie awarii.
 """
 import json
+import math
 import re
 import logging
 from typing import Any
@@ -66,22 +67,38 @@ class LLMEvaluator:
 
         data = json.loads(json_match.group())
 
-        def safe_score(path: dict, default: float = 50.0) -> float:
-            val = path.get("score", default)
-            return max(0.0, min(100.0, float(val)))
+        def section(name: str) -> dict:
+            value = data.get(name)
+            if not isinstance(value, dict):
+                raise ValueError(f"Brak sekcji '{name}' w odpowiedzi LLM")
+            return value
+
+        def score(name: str, part: dict) -> float:
+            # Brakującego wyniku nie zastępujemy domyślnym 50: taki sztuczny wynik
+            # trafiłby do bazy jako 'done'. Wyjątek kończy się fallbackiem i ponowieniem.
+            if "score" not in part:
+                raise ValueError(f"Brak wyniku '{name}.score' w odpowiedzi LLM")
+            val = float(part["score"])
+            if not math.isfinite(val):
+                raise ValueError(f"Niepoprawny wynik '{name}.score': {part['score']!r}")
+            return max(0.0, min(100.0, val))
+
+        factuality = section("factuality")
+        logic      = section("logic")
+        journalism = section("journalism")
 
         return {
-            "factuality_score":       safe_score(data.get("factuality", {})),
-            "factuality_description": data.get("factuality", {}).get("description", ""),
-            "factuality_flags":       data.get("factuality", {}).get("flags", {}),
+            "factuality_score":       score("factuality", factuality),
+            "factuality_description": factuality.get("description", ""),
+            "factuality_flags":       factuality.get("flags", {}),
 
-            "logic_score":            safe_score(data.get("logic", {})),
-            "logic_description":      data.get("logic", {}).get("description", ""),
-            "logic_flags":            data.get("logic", {}).get("flags", {}),
+            "logic_score":            score("logic", logic),
+            "logic_description":      logic.get("description", ""),
+            "logic_flags":            logic.get("flags", {}),
 
-            "journalism_score":       safe_score(data.get("journalism", {})),
-            "journalism_description": data.get("journalism", {}).get("description", ""),
-            "journalism_flags":       data.get("journalism", {}).get("flags", {}),
+            "journalism_score":       score("journalism", journalism),
+            "journalism_description": journalism.get("description", ""),
+            "journalism_flags":       journalism.get("flags", {}),
 
             "overall_description":    data.get("overall_description", ""),
         }

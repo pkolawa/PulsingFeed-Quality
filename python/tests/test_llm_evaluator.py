@@ -123,15 +123,17 @@ def test_blad_klienta_nie_wychodzi_na_zewnatrz(evaluator, client):
     assert "API niedostępne" in result["overall_description"]
 
 
-@pytest.mark.xfail(reason="_parse wstawia 50 za brakujące dane i zgłasza success=True, więc sztuczny wynik trafia do bazy jako 'done'")
+# Brakujący wynik nie może zamienić się w sztuczne 50 zapisane jako 'done'
 @pytest.mark.parametrize("response", [
     "{}",
     llm_json(factuality={"description": "Bez wyniku.", "flags": {}}),
     json.dumps({"logic": {"score": 70}, "journalism": {"score": 60}}),
+    llm_json(journalism="dobry warsztat"),
+    llm_json(logic={"score": float("nan"), "description": "", "flags": {}}),
 ])
-def test_niepelna_odpowiedz_nie_jest_sukcesem(evaluator, client, response):
+def test_niepelna_odpowiedz_daje_fallback(evaluator, client, response):
     client.response = response
-    assert evaluator.evaluate("T", "C")["success"] is False
+    assert_fallback(evaluator.evaluate("T", "C"))
 
 
 # ── Budowa promptu ───────────────────────────────────────────────────
