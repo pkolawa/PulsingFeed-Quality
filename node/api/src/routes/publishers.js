@@ -15,7 +15,7 @@ module.exports = function publishersRouter(db) {
       res.json(rows);
     } catch (err) {
       console.error("[API] GET /publishers:", err.message);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   });
 
@@ -83,7 +83,7 @@ module.exports = function publishersRouter(db) {
       });
     } catch (err) {
       console.error("[API] GET /publishers/:id:", err.message);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   });
 
@@ -106,7 +106,7 @@ module.exports = function publishersRouter(db) {
         return res.status(409).json({ error: "Wydawca z tym URL RSS już istnieje." });
       }
       console.error("[API] POST /publishers:", err.message);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   });
 
@@ -134,7 +134,9 @@ module.exports = function publishersRouter(db) {
 
       const { rows } = await db.query(
         `UPDATE articles
-         SET analysis_status = 'pending'
+         SET analysis_status = 'pending',
+             retry_count     = 0,
+             error_message   = NULL
          WHERE publisher_id = $1
            AND analysis_status = ANY($2::text[])
          RETURNING id`,
@@ -153,7 +155,7 @@ module.exports = function publishersRouter(db) {
       });
     } catch (err) {
       console.error("[API] POST /publishers/:id/analyze:", err.message);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   });
 
@@ -164,7 +166,7 @@ module.exports = function publishersRouter(db) {
       res.json({ success: true });
     } catch (err) {
       console.error("[API] DELETE /publishers/:id:", err.message);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   });
 

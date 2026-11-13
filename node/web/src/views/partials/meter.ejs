@@ -1,0 +1,9 @@
+<%# Pasek oceny. label: etykieta wiersza; bez niej wariant do tabeli, gdzie opis daje ariaLabel %>
+<% const hasValue = value !== null && value !== undefined; %>
+<div class="pf-meter-row pf-grade-<%= scoreGrade(value) %><%= locals.label ? '' : ' meter-row--compact' %>">
+  <% if (locals.label) { %><span class="meter-row__label"><%= label %></span><% } %>
+  <div class="pf-meter" role="progressbar" aria-label="<%= locals.label || ariaLabel %>" aria-valuemin="0" aria-valuemax="100"<% if (hasValue) { %> aria-valuenow="<%= value %>"<% } %>>
+    <div class="pf-meter__fill" style="width:<%= hasValue ? value : 0 %>%"></div>
+  </div>
+  <span class="pf-meter-row__value"><%= hasValue ? value : '—' %></span>
+</div>

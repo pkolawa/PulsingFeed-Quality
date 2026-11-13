@@ -1,22 +1,9 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= publisher.name %> — PulsingFeed Quality</title>
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
+<%- include('partials/header', {
+  title: publisher.name + ' — PulsingFeed Quality',
+  crumbs: [{ label: 'Wydawcy', href: '/' }, { label: publisher.name }],
+}) %>
 
-<nav class="topbar">
-  <a href="/" class="topbar-brand">⚡ PulsingFeed Quality</a>
-  <span class="topbar-sep">›</span>
-  <a href="/">Wydawcy</a>
-  <span class="topbar-sep">›</span>
-  <span><%= publisher.name %></span>
-</nav>
-
-<div class="container">
+<main class="pf-container panel-page">
 
   <%
     const g = scoreGrade(publisher.avg_total_score);
@@ -24,52 +11,51 @@
   %>
 
   <!-- ── Nagłówek wydawcy ─────────────────────────────────────────── -->
-  <div class="card">
-    <div class="pub-header">
-      <div class="score-circle grade-<%= g %>">
-        <span class="score-val"><%= score !== null ? score : '—' %></span>
-        <span class="score-lbl">/ 100</span>
+  <section class="pf-card">
+    <div class="score-header">
+      <div class="pf-score-ring pf-grade-<%= g %>">
+        <span class="pf-score-ring__value"><%= score !== null ? score : '—' %></span>
+        <span class="pf-score-ring__label">/ 100</span>
       </div>
-      <div class="pub-info">
-        <h1><%= publisher.name %></h1>
-        <div class="pub-url">
-          <a href="<%= publisher.rss_url %>" target="_blank">RSS ↗</a>
+      <div class="score-header__info">
+        <h1 class="pf-type-h3"><%= publisher.name %></h1>
+        <div class="pf-meta">
+          <span><a class="pf-link" href="<%= publisher.rss_url %>" target="_blank">RSS ↗</a></span>
           <% if (publisher.website_url) { %>
-            &nbsp;·&nbsp;
-            <a href="<%= publisher.website_url %>" target="_blank">Strona ↗</a>
+            <span><a class="pf-link" href="<%= publisher.website_url %>" target="_blank">Strona ↗</a></span>
           <% } %>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- ── Statystyki ogólne ────────────────────────────────────────── -->
-  <div class="card">
-    <div class="card-title">Statystyki ogólne</div>
-    <div class="stat-grid">
-      <div class="stat-box">
-        <div class="stat-val"><%= publisher.analyzed_articles %></div>
-        <div class="stat-key">Przeanalizowanych artykułów</div>
+  <section class="pf-card">
+    <h2 class="pf-card__title">Statystyki ogólne</h2>
+    <div class="pf-stat-grid">
+      <div class="pf-stat">
+        <div class="pf-stat__value"><%= publisher.analyzed_articles %></div>
+        <div class="pf-stat__label">Przeanalizowanych artykułów</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-val"><%= publisher.total_articles %></div>
-        <div class="stat-key">Wszystkich artykułów</div>
+      <div class="pf-stat">
+        <div class="pf-stat__value"><%= publisher.total_articles %></div>
+        <div class="pf-stat__label">Wszystkich artykułów</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-val"><%= publisher.pct_high_quality !== null ? publisher.pct_high_quality + '%' : '—' %></div>
-        <div class="stat-key">Artykułów ≥ 70 pkt</div>
+      <div class="pf-stat">
+        <div class="pf-stat__value"><%= publisher.pct_high_quality !== null ? publisher.pct_high_quality + '%' : '—' %></div>
+        <div class="pf-stat__label">Artykułów ≥ 70 pkt</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-val"><%= publisher.recent_avg_score !== null ? publisher.recent_avg_score : '—' %></div>
-        <div class="stat-key">Śr. wynik (ostatnie 30)</div>
+      <div class="pf-stat">
+        <div class="pf-stat__value"><%= publisher.recent_avg_score !== null ? publisher.recent_avg_score : '—' %></div>
+        <div class="pf-stat__label">Śr. wynik (ostatnie 30)</div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- ── Wyniki kategorii ─────────────────────────────────────────── -->
   <% if (score !== null) { %>
-  <div class="card">
-    <div class="card-title">Wyniki kategorii (średnie)</div>
+  <section class="pf-card">
+    <h2 class="pf-card__title">Wyniki kategorii (średnie)</h2>
 
     <%
       const cats = [
@@ -82,93 +68,92 @@
     %>
 
     <% cats.forEach(cat => { %>
-    <div class="cat-row">
-      <span class="cat-label"><%= cat.label %></span>
-      <div class="bar-wrap">
-        <div class="bar-fill grade-<%= scoreGrade(cat.val) %>"
-             style="width:<%= cat.val !== null ? cat.val : 0 %>%"></div>
-      </div>
-      <span class="cat-value"><%= cat.val !== null ? cat.val : '—' %></span>
-    </div>
+      <%- include('partials/meter', { value: cat.val, label: cat.label }) %>
     <% }) %>
-  </div>
+  </section>
   <% } %>
 
   <!-- ── Rozkład wyników ──────────────────────────────────────────── -->
   <% if (publisher.score_distribution && publisher.score_distribution.length > 0) { %>
-  <div class="card">
-    <div class="card-title">Rozkład wyników artykułów</div>
+  <section class="pf-card">
+    <h2 class="pf-card__title">Rozkład wyników artykułów</h2>
     <%
       const maxCount = Math.max(...publisher.score_distribution.map(b => parseInt(b.count)));
+      const histSummary = publisher.score_distribution.map(b => `${b.label}: ${b.count}`).join(', ');
     %>
-    <div class="histogram">
-      <% publisher.score_distribution.forEach(bucket => {
-        const h = maxCount > 0 ? (parseInt(bucket.count) / maxCount * 100) : 0;
-      %>
-      <div class="hist-col">
-        <span class="muted" style="font-size:11px"><%= bucket.count %></span>
-        <div class="hist-bar" style="height:<%= h %>%" title="<%= bucket.label %>: <%= bucket.count %>"></div>
-        <span class="hist-lbl"><%= bucket.label %></span>
+    <div class="hist-scroll">
+      <div class="pf-histogram hist-chart" role="img" aria-label="Liczba artykułów w przedziałach wyniku. <%= histSummary %>">
+        <% publisher.score_distribution.forEach(bucket => {
+          const h = maxCount > 0 ? (parseInt(bucket.count) / maxCount * 100) : 0;
+        %>
+        <div class="pf-histogram__col">
+          <div class="hist-plot">
+            <div class="pf-histogram__bar" style="height:<%= h %>%" title="<%= bucket.label %>: <%= bucket.count %>">
+              <span class="hist-count"><%= bucket.count %></span>
+            </div>
+          </div>
+          <span class="pf-histogram__label"><%= bucket.label %></span>
+        </div>
+        <% }) %>
       </div>
-      <% }) %>
     </div>
-  </div>
+  </section>
   <% } %>
 
   <!-- ── Artykuły ─────────────────────────────────────────────────── -->
-  <div class="card" style="padding:0; overflow:hidden;">
-    <div style="padding:16px 24px 0; font-weight:600; font-size:15px;">
-      Artykuły (<%= articles.length %> najnowszych)
-    </div>
-    <% if (articles.length === 0) { %>
-      <div class="empty-state">Brak artykułów do wyświetlenia.</div>
-    <% } else { %>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Artykuł</th>
-          <th style="text-align:center">Wynik</th>
-          <th>Fakt.</th>
-          <th>Język.</th>
-          <th>Logika</th>
-          <th>Dzien.</th>
-          <th>Źródła</th>
-          <th style="text-align:right">Data</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% articles.forEach(a => { %>
-        <tr>
-          <td>
-            <a href="/article/<%= a.id %>"><%= a.title %></a>
-            <% if (a.analysis_status !== 'done') { %>
-              &nbsp;<span class="status-badge badge-<%= a.analysis_status %>"><%= a.analysis_status %></span>
-            <% } %>
-          </td>
-          <td style="text-align:center">
-            <% if (a.total_score !== null) { %>
-              <span class="score-badge grade-<%= scoreGrade(a.total_score) %>">
-                <%= a.total_score %>
-              </span>
-            <% } else { %>
-              <span class="score-badge grade-na">—</span>
-            <% } %>
-          </td>
-          <td><%= a.factuality_score !== null ? a.factuality_score : '—' %></td>
-          <td><%= a.linguistic_score !== null ? a.linguistic_score : '—' %></td>
-          <td><%= a.logic_score !== null ? a.logic_score : '—' %></td>
-          <td><%= a.journalism_score !== null ? a.journalism_score : '—' %></td>
-          <td><%= a.sources_score !== null ? a.sources_score : '—' %></td>
-          <td style="text-align:right; white-space:nowrap" class="muted">
-            <%= fmtDate(a.collected_at) %>
-          </td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
-    <% } %>
+  <% if (articles.length === 0) { %>
+  <div class="pf-empty">
+    <p>Brak artykułów do wyświetlenia. Kolektor sprawdza kanały co 15 minut, więc wróć tu po najbliższym przebiegu.</p>
   </div>
+  <% } else { %>
+  <section class="pf-card pf-card--flush">
+    <h2 class="pf-card__title card-heading">Artykuły (<%= articles.length %> najnowszych)</h2>
+    <div class="pf-table-wrap">
+      <table class="pf-table">
+        <thead>
+          <tr>
+            <th>Artykuł</th>
+            <th>Wynik</th>
+            <th class="pf-table__num">Fakt.</th>
+            <th class="pf-table__num">Język.</th>
+            <th class="pf-table__num">Logika</th>
+            <th class="pf-table__num">Dzien.</th>
+            <th class="pf-table__num">Źródła</th>
+            <th class="pf-table__num">Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% articles.forEach(a => { %>
+          <tr>
+            <td>
+              <div class="cell-inline">
+                <a class="pf-link" href="/article/<%= a.id %>"><%= a.title %></a>
+                <% if (a.analysis_status !== 'done') { const s = statusBadge(a.analysis_status); %>
+                  <span class="pf-badge <%= s.cls %>"><%= s.label %></span>
+                <% } %>
+              </div>
+            </td>
+            <td>
+              <% if (a.total_score !== null) { %>
+                <span class="pf-score pf-grade-<%= scoreGrade(a.total_score) %>"><%= a.total_score %></span>
+              <% } else { %>
+                <span class="pf-score pf-grade-na">—</span>
+              <% } %>
+            </td>
+            <td class="pf-table__num"><%= a.factuality_score !== null ? a.factuality_score : '—' %></td>
+            <td class="pf-table__num"><%= a.linguistic_score !== null ? a.linguistic_score : '—' %></td>
+            <td class="pf-table__num"><%= a.logic_score !== null ? a.logic_score : '—' %></td>
+            <td class="pf-table__num"><%= a.journalism_score !== null ? a.journalism_score : '—' %></td>
+            <td class="pf-table__num"><%= a.sources_score !== null ? a.sources_score : '—' %></td>
+            <td class="pf-table__num nowrap muted"><%= fmtDate(a.collected_at) %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <% } %>
 
-</div>
+</main>
 </body>
 </html>

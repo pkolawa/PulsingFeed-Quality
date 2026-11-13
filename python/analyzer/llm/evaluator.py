@@ -8,7 +8,7 @@ import logging
 from typing import Any
 
 from .client import LLMClient
-from .prompts import ARTICLE_EVALUATION_PROMPT
+from .prompts import ARTICLE_EVALUATION_SYSTEM, ARTICLE_EVALUATION_USER
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +36,16 @@ class LLMEvaluator:
         if len(content) > MAX_CONTENT_CHARS:
             truncated += "\n\n[...tekst skrócony do analizy...]"
 
-        prompt = ARTICLE_EVALUATION_PROMPT.format(
+        prompt = ARTICLE_EVALUATION_USER.format(
             title=title or "(brak tytułu)",
             content=truncated,
         )
 
         try:
-            raw_text, tokens_used = self.client.complete(prompt, max_tokens=1_500)
+            # Limit obejmuje także tokeny rozumowania modelu, nie tylko odpowiedź JSON
+            raw_text, tokens_used = self.client.complete(
+                ARTICLE_EVALUATION_SYSTEM, prompt, max_tokens=16_000
+            )
             result = self._parse(raw_text)
             result["tokens_used"] = tokens_used
             result["model"]       = self.client.model

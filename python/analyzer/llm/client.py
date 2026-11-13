@@ -6,7 +6,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from config import LLM_PROVIDER, LLM_MODEL, ANTHROPIC_API_KEY, OPENAI_API_KEY
+from config import LLM_PROVIDER, LLM_MODEL, ANTHROPIC_API_KEY, ANTHROPIC_EFFORT, OPENAI_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,11 @@ class _BaseProvider(ABC):
         self.model = model
 
     @abstractmethod
-    def complete(self, prompt: str, max_tokens: int) -> tuple[str, int]:
-        """Zwraca (tekst_odpowiedzi, łączna_liczba_tokenów)."""
+    def complete(self, system: str, prompt: str, max_tokens: int) -> tuple[str, int]:
+        """
+        Zwraca (tekst_odpowiedzi, łączna_liczba_tokenów).
+        `system` to stała instrukcja (cache'owana), `prompt` — treść zmienna.
+        """
 
 
 class _AnthropicProvider(_BaseProvider):
@@ -30,14 +33,39 @@ class _AnthropicProvider(_BaseProvider):
         import anthropic
         self._client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-    def complete(self, prompt: str, max_tokens: int) -> tuple[str, int]:
+    def complete(self, system: str, prompt: str, max_tokens: int) -> tuple[str, int]:
         message = self._client.messages.create(
             model=self.model,
             max_tokens=max_tokens,
+            # Prompt caching: stała instrukcja systemowa jest cache'owana (TTL 5 min),
+            # kolejne artykuły z partii płacą ~10% ceny za te tokeny wejściowe
+            system=[{
+                "type": "text",
+                "text": system,
+                "cache_control": {"type": "ephemeral"},
+            }],
             messages=[{"role": "user", "content": prompt}],
+            # extra_body — działa także na starszych wersjach SDK bez parametru output_config
+            extra_body={"output_config": {"effort": ANTHROPIC_EFFORT}},
         )
-        text = message.content[0].text
-        tokens_used = message.usage.input_tokens + message.usage.output_tokens
+        # Model może odmówić odpowiedzi (HTTP 200 + stop_reason "refusal")
+        if message.stop_reason == "refusal":
+            raise ValueError(f"Model odmówił odpowiedzi: {getattr(message, 'stop_details', None)}")
+        if message.stop_reason == "max_tokens":
+            raise ValueError(f"Odpowiedź ucięta po {max_tokens} tokenach (max_tokens).")
+
+        # Odpowiedź może zaczynać się od bloków "thinking" — bierzemy tylko bloki tekstowe
+        text = "".join(block.text for block in message.content if block.type == "text")
+
+        # input_tokens nie obejmuje tokenów z cache — sumujemy wszystkie składniki
+        usage = message.usage
+        cache_write = getattr(usage, "cache_creation_input_tokens", None) or 0
+        cache_read  = getattr(usage, "cache_read_input_tokens", None) or 0
+        logger.debug(
+            f"Anthropic usage — input: {usage.input_tokens}, cache_write: {cache_write}, "
+            f"cache_read: {cache_read}, output: {usage.output_tokens}"
+        )
+        tokens_used = usage.input_tokens + cache_write + cache_read + usage.output_tokens
         return text, tokens_used
 
 
@@ -49,11 +77,15 @@ class _OpenAIProvider(_BaseProvider):
         from openai import OpenAI
         self._client = OpenAI(api_key=OPENAI_API_KEY)
 
-    def complete(self, prompt: str, max_tokens: int) -> tuple[str, int]:
+    def complete(self, system: str, prompt: str, max_tokens: int) -> tuple[str, int]:
+        # OpenAI cache'uje wspólny prefiks automatycznie — wystarczy stała wiadomość systemowa na początku
         response = self._client.chat.completions.create(
             model=self.model,
             max_completion_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
         )
         text = response.choices[0].message.content
         if not text:
@@ -89,10 +121,11 @@ class LLMClient:
         self.model = self._provider.model
         logger.info(f"Używany dostawca LLM: {LLM_PROVIDER} / {self.model}")
 
-    def complete(self, prompt: str, max_tokens: int = 1_500) -> tuple[str, int]:
+    def complete(self, system: str, prompt: str, max_tokens: int = 1_500) -> tuple[str, int]:
         """
         Wysyła prompt do LLM i zwraca (tekst_odpowiedzi, łączna_liczba_tokenów).
+        `system` powinien być stały między wywołaniami — jest cache'owany.
         """
-        text, tokens_used = self._provider.complete(prompt, max_tokens)
+        text, tokens_used = self._provider.complete(system, prompt, max_tokens)
         logger.debug(f"LLM odpowiedział — tokeny: {tokens_used}")
         return text, tokens_used

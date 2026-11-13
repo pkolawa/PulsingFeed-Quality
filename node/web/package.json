@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "sync-design-system": "node ../../../shared/design-system/sync.js public/css/design-system"
   },
   "dependencies": {
     "axios": "^1.7.3",

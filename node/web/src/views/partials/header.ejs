@@ -1,0 +1,36 @@
+<%# Początek dokumentu i pasek: title (wymagany), crumbs (opcjonalnie: [{ label, href? }], ostatnia pozycja bez href) %>
+<% const crumbs = locals.crumbs || []; %>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@400;600;700&display=swap&subset=latin-ext">
+  <link rel="stylesheet" href="/css/design-system/tokens.css">
+  <link rel="stylesheet" href="/css/design-system/base.css">
+  <link rel="stylesheet" href="/css/design-system/components.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="pf-nav pf-nav--masthead pf-on-masthead panel-nav">
+  <div class="pf-nav__inner">
+    <a class="pf-logo" href="/"><svg class="pf-logo__mark" width="26" height="26" viewBox="0 0 100 100" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><g transform="matrix(0.0669638,0,0,0.0669638,-38.7505,-63.9143)"><g transform="matrix(0.81806,0.509702,-0.571793,0.917714,1116.33,-720.906)"><path d="M703.293,1561.9C927.429,1229.4 1524.18,1059.14 1658.08,1014.44C1912.91,929.359 2246.87,1441.61 2191.11,1876.66C2136.93,2299.46 1652.89,2626.79 1325.63,2485.12C900.683,2301.16 512.285,1845.27 703.293,1561.9ZM1675.65,1242.98C1474.25,1262.68 654.725,1430.53 865.562,1846.32C1076.4,2262.12 1417.43,2607.75 1715.93,2333.58C2014.43,2059.41 2062.58,2070.31 2073.99,1728.11C2085.4,1385.91 1856.63,1225.28 1675.65,1242.98Z"/></g><g transform="matrix(-0.748221,1.78515,-1.63637,-0.685864,4938.67,-1390.38)"><path fill-opacity="0.5" d="M1900.98,1063.29C1905.6,964.51 2012.37,857.453 2200.17,896.862C2387.97,936.27 2378.14,961.032 2505.6,1147.78C2633.07,1334.53 2415.36,1483.79 2169.31,1556.4C1923.26,1629.02 1895.84,1173.21 1900.98,1063.29ZM2063.61,1067.48C1965.82,1234.04 2035.65,1389.83 2106.69,1435.46C2153.21,1465.34 2375.94,1437.12 2420.68,1350.69C2490.69,1215.49 2412.84,1093.22 2357.11,1044.12C2270.56,967.857 2140.61,936.35 2063.61,1067.48Z"/></g></g></svg><span>PulsingFeed Quality</span></a>
+    <% if (crumbs.length > 1) { %>
+    <nav aria-label="Ścieżka">
+      <ol class="pf-breadcrumb">
+        <% crumbs.forEach(c => { %>
+          <% if (c.href) { %>
+          <li><a href="<%= c.href %>"><%= c.label %></a></li>
+          <% } else { %>
+          <li aria-current="page"><%= c.label %></li>
+          <% } %>
+        <% }) %>
+      </ol>
+    </nav>
+    <% } %>
+  </div>
+</header>
