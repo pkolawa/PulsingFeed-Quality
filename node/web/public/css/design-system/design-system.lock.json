@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "source": "../../../../../../shared/design-system",
+  "files": {
+    "tokens.json": "2f8edab31892c807cb036bf9194829473911d9eaaa101d516fd94a253294ce41",
+    "contrast-pairs.json": "ba83b5c407b69457d6b7630fa43fc758f86280cfeb40dc025d3e5ef0fe20ee68",
+    "tokens.css": "a0e386f5e40931dfbbe4a94cccea5ba1fbfc4e09b212e5c54bca1766eeb8baa8",
+    "base.css": "577ebfff02338ea7eba08c326c5193043af9aa5bf001b7f6f0a37c02c1a88ea7",
+    "components.css": "cc0f37781926fe6d7a0d20609c011d958b57dc18016bb5a0254bd7efc7858238",
+    "check.cjs": "346a58a0ace59cb8a1a08ec8b3abba187f13375719f86da57cd757ddc1a67977"
+  }
+}
