@@ -1719,6 +1719,29 @@ dialog.pf-modal::backdrop {
   color: var(--text-primary);
 }
 
+/* Zamknięcie okna: sam znak X, bez tła i obrysu. Pole kliknięcia zostaje 36 × 36 px,
+   a ujemny margines wyrównuje znak do wcięcia nagłówka. Focus daje obrys z base.css. */
+.pf-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  margin-right: calc(var(--space-2-5) * -1);
+  padding: 0;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.pf-modal__close:hover {
+  color: var(--accent);
+}
+
 .pf-modal__body {
   flex: 1;
   min-height: 0;
