@@ -13,6 +13,8 @@ const API_URL = process.env.API_URL || "http://localhost:3001";
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+// Kopia design systemu zawiera też narzędzia sync (check.cjs, lock, tokens.json): na zewnątrz tylko CSS.
+app.use("/css/design-system", (req, res, next) => (req.path.endsWith(".css") ? next() : res.sendStatus(404)));
 app.use(express.static(path.join(__dirname, "../public")));
 
 // Pomocnicze: oblicz klasę gradientu na podstawie wyniku
